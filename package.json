@@ -1,0 +1,11 @@
+{
+  "name": "luc-mergault-bitcointalk-auto-verify-signatures-archive-and-alert",
+  "version": "1.0.0",
+  "author": "luc-mergault <contact@luc-mergault.fr>",
+  "description": "Bitcointalk - Auto Verify Signatures : Archive and Alert",
+  "dependencies": {
+    "jquery": "~3.4.1",
+    "jsdom": "~15.2.0",
+    "request": "~2.88.0"
+  }
+}
