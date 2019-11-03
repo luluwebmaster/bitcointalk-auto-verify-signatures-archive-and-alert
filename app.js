@@ -8,18 +8,30 @@
 /*************************************************************************************************************************/
 
 // Load modules
+const Fs = require('fs');
 const Jquery = require('jquery');
 const Jsdom = require('jsdom');
 const Request = require('request');
+const Express = require('express');
+const Nodemailer = require('nodemailer');
 const Lowdb = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
-const Express = require('express');
+
+// If config file is not created
+if(!Fs.existsSync('./config/config.json')) {
+
+    // Copy example config
+    Fs.copyFileSync('./config/config.example.json', './config/config.json', function () {});
+}
 
 // App config
 const config = require('./config/config.json');
 
 // App variables
 const webApp = Express()
+if(config.email.enable) {
+    var mailTransporter = Nodemailer.createTransport(config.email);
+}
 const originalConsolLog = console.log;
 let lastBttRequest = 0;
 
@@ -309,19 +321,29 @@ const manageMessageFromPage = function (dbMessages, message) {
             // Set db message
             const dbMessage = dbMessages.get(message.messageId);
 
-            // If message have been updated
+            // If message has been updated
             if(message.fullText !== dbMessage.get('fullText').value() && !dbMessage.has('alertSent').value()) {
 
                 // Log
-                console.log('Alert | A message have been updated : '+message.link);
+                console.log('Alert | A message has been updated : '+message.link);
 
                 // Update DB message
                 dbMessage.set('alertSent', true).write();
 
-                // TODO: Send email alert
-            }
+                // If mail is enable
+                if(config.email.enable) {
 
-            // TODO: Check if a message has removed
+                    // Send alert email
+                    mailTransporter.sendMail({
+                        from: '"Bitcointalk - Alerts" <'+config.email.sender+'>',
+                        to: config.email.receivers,
+                        subject: 'Bitcointalk - Alerts : A message has been updated !',
+                        html:
+                            'This email is a alert sent by : Bitcointalk : Auto Verify Signatures - Archive and alert !<br /><br />'+
+                            '<a href="'+message.link+'">This message has been updated.<a/>'
+                    });
+                }
+            }
         }
 
         // Resolve
@@ -400,8 +422,12 @@ const start = async function () {
         next();
     }, config.timeInSecondsBetweenCheckLastMessages * 1000);
 
-    // Start web server
-    startWebserver();
+    // If webserver is enable
+    if(config.webServer.enable) {
+
+        // Start web server
+        startWebserver();
+    }
 }
 
 // Start bot

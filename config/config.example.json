@@ -1,0 +1,26 @@
+{
+    "links": {
+        "bitcointalk": {
+            "stakeAddress": "https://bitcointalk.org/index.php?topic=996318"
+        }
+    },
+    "timeInSecondsBetweenBttRequest": 1,
+    "timeInHoursBetweenCheckAllMessages": 12,
+    "timeInSecondsBetweenCheckLastMessages": 5,
+	"webServer": {
+        "enable": true,
+		"port": 4269
+	},
+    "email": {
+        "enable": true,
+        "sender": "root@example.com",
+        "receivers": "root@example.com",
+        "host": "smtp.example.com",
+        "port": 587,
+        "secure": false,
+        "auth": {
+            "user": "root@example.com",
+            "pass": "password"
+        }
+    }
+}
