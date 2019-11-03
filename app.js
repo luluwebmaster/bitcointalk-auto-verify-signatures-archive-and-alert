@@ -234,7 +234,7 @@ const manageDbMessages = function () {
             const pageMessages = await getMessagesFromPage(page);
 
             // Manage messages
-            await manageMessagesFromPage(pageMessages);
+            await manageMessagesFromPage(page, pageMessages);
         }
 
         // Reset last page checked
@@ -246,17 +246,36 @@ const manageDbMessages = function () {
 }
 
 // Function for manage messages from page
-const manageMessagesFromPage = function (messages) {
+const manageMessagesFromPage = function (pageNumber, messages) {
 
     // Return promise
     return new Promise(async function (resolve) {
+
+        // Get DB messages
+        const dbMessages = db.get('messages');
+
+        // Set messages list for save in DB
+        const messagesForSave = {};
 
         // Loop in all messages
         for(const messageId in messages) {
 
             // Manange message
-            await manageMessageFromPage(messages[messageId]);
+            const response = await manageMessageFromPage(dbMessages, messages[messageId]);
+
+            // If need to save
+            if(response.needToSave) {
+
+                // Add in list
+                messagesForSave[messageId] = messages[messageId];
+            }
         }
+
+        // Log
+        console.log('Save '+Object.keys(messagesForSave).length+' message(s) from page number : '+pageNumber);
+
+        // Save new messages
+        db.get('messages').assign(messagesForSave).write();
 
         // Resolve
         resolve();
@@ -264,22 +283,22 @@ const manageMessagesFromPage = function (messages) {
 }
 
 // Function for manage message from page
-const manageMessageFromPage = function (message) {
+const manageMessageFromPage = function (dbMessages, message) {
 
     // Return promise
     return new Promise(function (resolve) {
 
-        // Set DB messages
-        const dbMessages = db.get('messages');
+        // Set need to save status
+        let needToSave = true;
 
         // If message is not saved
         if(!dbMessages.has(message.messageId).value()) {
 
             // Log
-            console.log('New message saved : '+message.link);
+            console.log('New message found not saved : '+message.link);
 
-            // Save message
-            dbMessages.set(message.messageId, message).write();
+            // Update need to save status
+            needToSave = true;
         } else {
 
             // Set db message
@@ -299,7 +318,9 @@ const manageMessageFromPage = function (message) {
         }
 
         // Resolve
-        resolve();
+        resolve({
+            needToSave: needToSave
+        });
     });
 }
 
