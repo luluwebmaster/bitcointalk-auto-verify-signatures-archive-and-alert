@@ -12,9 +12,11 @@ In addition to that, in case of modification or deletion of a message, you can c
 
 To use this bot, you need to install [Node.JS](https://nodejs.org/).
 
-First, install all packages with `npm install`.
+First, clone this respository with `git clone https://github.com/luluwebmaster/bitcointalk-auto-verify-signatures-archive-and-alert.git`.
 
-Then, creation a new screen `screen -S change-this-by-a-screen-name` and run node server inside the screen with `node app`.
+Install all packages with `npm install`.
+
+Then, create a new screen `screen -S change-this-by-a-screen-name` and run node server inside the screen with `node app`.
 
 #### Projects used in this project
 

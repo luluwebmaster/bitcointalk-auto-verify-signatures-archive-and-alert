@@ -255,7 +255,7 @@ const checkingAllMessages = function () {
         db.set('canCheckLast', true).write();
 
         // Log
-        console.log('En of checking DB messages ...');
+        console.log('End of checking DB messages ...');
 
         // Resolve
         resolve();
