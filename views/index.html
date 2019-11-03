@@ -1,0 +1,121 @@
+<html>
+    <head>
+        <title>Bitcointalk : Staked Address</title>
+        <link rel="icon" href="images/icon.jpg" />
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <style>
+            .list-group-item {
+                border-radius: 0px !important;
+            }
+            .search-box {
+                padding: 0px !important;
+                border: 0px !important;
+                border-bottom: 5px solid #496d91 !important;
+            }
+            .form-inline {
+                display: flex !important;
+            }
+            .btn-primary, .btn-primary:hover, .btn-primary:focus {
+                background-color: #e7e7e7 !important;
+                color: black !important;
+                box-shadow: none !important;
+            }
+            .btn-primary, .form-control {
+                height: auto !important;
+                padding: 30px !important;
+                border: 0px !important;
+                border-radius: 0px !important;
+                margin: 0px !important;
+                font-size: 26px !important;
+            }
+            .form-control {
+                flex: 1 !important;
+                font-size: 18px !important;
+            }
+            .form-control:focus, .form-control:active, .search-box:active, .search-box:hover {
+                box-shadow: none !important;
+                background-color: white !important;
+            }
+            .list-group-item-action:not(.search-box), .list-group-item-action:not(.search-box):active, .list-group-item-action:not(.search-box):hover {
+                background-color: #f6f6f6 !important;
+                color: black !important;
+                border: 0px !important;
+            }
+            .list-group-item-action.active, .list-group-item-action.active:active, .list-group-item-action.active:hover {
+                background-color: #ecedf3 !important;
+                color: black !important;
+                border: 0px !important;
+            }
+            .loading {
+                position: fixed;
+                top: 0px;
+                bottom: 0px;
+                left: 0px;
+                right: 0px;
+                background-color: white;
+            }
+            .loading img {
+                position: fixed;
+                top: 0px;
+                bottom: 0px;
+                left: 0px;
+                right: 0px;
+                height: 60px;
+                width: 60px;
+                margin: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="loading">
+            <img src="https://i.imgur.com/RlS6YST.gif" />
+        </div>
+        <div class="list-group"></div>
+        <script>
+
+            // Function for remove html in text
+            function stripHtml(html) {
+                var tmp = document.createElement("DIV");
+                tmp.innerHTML = html;
+                return tmp.textContent || tmp.innerText || "";
+            }
+
+            // Get all messages
+            $.getJSON('/get-messages', function (messages) {
+
+                // Loop in all messages
+                for(const messageId in messages) {
+
+                    // Set current message
+                    const message = messages[messageId];
+
+                    // Set blue color
+                    let blue = true;
+
+                    // Append message
+                    $('.list-group').append(
+                        '<a target="_blank" href="'+message['link']+'" class="list-group-item list-group-item-action '+((blue == true) ? 'active' : '')+'">'+
+                            '<div class="d-flex w-100 justify-content-between">'+
+                                '<h5 class="mb-1">Message from : '+message['user']['name']+'</h5>'+
+                                '<small>Message number : '+message['number']+'</small>'+
+                            '</div>'+
+                            '<p class="mb-1">'+stripHtml(message['fullText'].replace(/<br \/>/gm, '[back-line]').replace(/<br\/>/gm, '[back-line]').replace(/<br>/gm, '[back-line]').replace(/<\/p>/gm, '[back-line]').replace(/<p>/gm, '')).replace(/\[back-line\]/gm, '<br />')+'</p>'+
+                        '</a>'
+                    );
+
+                    // Update blue color
+    	            if(blue == true) {
+    	                blue = false;
+    	            } else if(blue == false) {
+    	                blue = true;
+    	            }
+                }
+
+                // Remove loading element
+                $('.loading').remove();
+            });
+        </script>
+    </body>
+</html>

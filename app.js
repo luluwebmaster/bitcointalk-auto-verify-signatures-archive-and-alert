@@ -12,19 +12,14 @@ const Jquery = require('jquery');
 const Jsdom = require('jsdom');
 const Request = require('request');
 const Lowdb = require('lowdb');
-const FileSync = require('lowdb/adapters/FileSync')
+const FileSync = require('lowdb/adapters/FileSync');
+const Express = require('express');
 
 // App config
-const config = {
-    links: {
-        bitcointalk: {
-            stakeAddress: 'https://bitcointalk.org/index.php?topic=996318'
-        }
-    },
-    timeInSecondsBetweenBttRequest: 1
-};
+const config = require('./config/config.json');
 
 // App variables
+const webApp = Express()
 const originalConsolLog = console.log;
 let lastBttRequest = 0;
 
@@ -34,6 +29,7 @@ const db = Lowdb(adapter)
 db.defaults({
     messages: {}
 }).write();
+db.set('canCheckLast', false).write();
 
 // Function for get time
 const getTime = function () {
@@ -215,11 +211,14 @@ const getMessagesFromPage = function (page = 'last') {
     });
 }
 
-// Function for manage messages in db
-const manageDbMessages = function () {
+// Function for checking all messages
+const checkingAllMessages = function () {
 
     // Return promise
     return new Promise(async function (resolve) {
+
+        // Log
+        console.log('Starting checking DB messages ...');
 
         // Get page number
         const pagesNumber = await getPagesNumber();
@@ -239,6 +238,12 @@ const manageDbMessages = function () {
 
         // Reset last page checked
         db.set('lastPageChecked', 1).write();
+
+        // Set can check last messages status
+        db.set('canCheckLast', true).write();
+
+        // Log
+        console.log('En of checking DB messages ...');
 
         // Resolve
         resolve();
@@ -271,11 +276,15 @@ const manageMessagesFromPage = function (pageNumber, messages) {
             }
         }
 
-        // Log
-        console.log('Save '+Object.keys(messagesForSave).length+' message(s) from page number : '+pageNumber);
+        // If have message for save
+        if(Object.keys(messagesForSave).length > 0) {
 
-        // Save new messages
-        db.get('messages').assign(messagesForSave).write();
+            // Log
+            console.log('Save '+Object.keys(messagesForSave).length+' message(s) from page number : '+pageNumber);
+
+            // Save new messages
+            db.get('messages').assign(messagesForSave).write();
+        }
 
         // Resolve
         resolve();
@@ -291,15 +300,11 @@ const manageMessageFromPage = function (dbMessages, message) {
         // Set need to save status
         let needToSave = true;
 
-        // If message is not saved
-        if(!dbMessages.has(message.messageId).value()) {
-
-            // Log
-            console.log('New message found not saved : '+message.link);
+        // If message is saved
+        if(dbMessages.has(message.messageId).value()) {
 
             // Update need to save status
-            needToSave = true;
-        } else {
+            needToSave = false;
 
             // Set db message
             const dbMessage = dbMessages.get(message.messageId);
@@ -315,6 +320,8 @@ const manageMessageFromPage = function (dbMessages, message) {
 
                 // TODO: Send email alert
             }
+
+            // TODO: Check if a message has removed
         }
 
         // Resolve
@@ -324,18 +331,77 @@ const manageMessageFromPage = function (dbMessages, message) {
     });
 }
 
+// Function for manage last messages
+const checkingLastMessages = function () {
+
+    // Return promise
+    return new Promise(async function (resolve) {
+
+        // Get last page messages
+        const pageMessages = await getMessagesFromPage();
+
+        // Manage messages
+        await manageMessagesFromPage('last', pageMessages);
+
+        // Resolve
+        resolve();
+    });
+}
+
+// Function for start web server
+const startWebserver = function () {
+
+    // Listen get data link
+    webApp.get('/get-messages', function (req, res) {
+
+        // Send response
+        res.json(db.get('messages').value());
+    });
+
+    // Listen root link
+    webApp.get('/', function (req, res) {
+
+        // Send response
+        res.sendFile(__dirname+'/views/index.html');
+    });
+
+    // Listen web server port
+    webApp.listen(config.webServer.port, function () {
+
+        // Log
+        console.log('Web server is ready on port : '+config.webServer.port);
+    });
+}
+
 // Function for start bot
 const start = async function () {
 
-    // Start loop for manage db messages
+    // Start loop for checking all messages
     setLoop(async function (next) {
 
-        // Start managing of db messages
-        await manageDbMessages();
+        // Checking all messages
+        await checkingAllMessages();
 
         // Call next
         next();
-    }, 12 * 60 * 60 * 1000);
+    }, config.timeInHoursBetweenCheckAllMessages * 60 * 60 * 1000);
+
+    // Start loop for checking last messages
+    setLoop(async function (next) {
+
+        // Check if can check
+        if(db.has('canCheckLast').value() && db.get('canCheckLast').value()) {
+
+            // Checking last messages
+            await checkingLastMessages();
+        }
+
+        // Call next
+        next();
+    }, config.timeInSecondsBetweenCheckLastMessages * 1000);
+
+    // Start web server
+    startWebserver();
 }
 
 // Start bot

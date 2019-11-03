@@ -4,9 +4,10 @@
   "author": "luc-mergault <contact@luc-mergault.fr>",
   "description": "Bitcointalk - Auto Verify Signatures : Archive and Alert",
   "dependencies": {
+    "express": "~4.17.1",
     "jquery": "~3.4.1",
     "jsdom": "~15.2.0",
-    "request": "~2.88.0",
-    "lowdb": "~1.0.0"
+    "lowdb": "~1.0.0",
+    "request": "~2.88.0"
   }
 }

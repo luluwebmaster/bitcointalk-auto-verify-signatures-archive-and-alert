@@ -11,3 +11,21 @@ To use this bot, you need to install [Node.JS](https://nodejs.org/).
 First, install all packages with `npm install`.
 
 Then, creation a new screen `screen -S change-this-by-a-screen-name` and run node server inside the screen with `node app`.
+
+#### Projects used in this project.
+
+- [Node.js](https://nodejs.org/en/)
+- [Request](https://github.com/request/request)
+- [Lowdb](https://github.com/typicode/lowdb)
+- [Jsdom](https://github.com/jsdom/jsdom)
+- [Express](https://expressjs.com/fr/)
+- [Jquery](https://jquery.com/)
+- [Bootstrap](https://getbootstrap.com/)
+
+#### Donate
+
+- Bitcoin : 1DSXQn7AankhmXUvExfZBbo8zWa3ie3jXc
+
+#### Contact
+- Mail : contact@luc-mergault.fr
+- Twitter : [@Luluwebmaster](https://twitter.com/Luluwebmaster)

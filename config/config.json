@@ -1,0 +1,13 @@
+{
+    "links": {
+        "bitcointalk": {
+            "stakeAddress": "https://bitcointalk.org/index.php?topic=996318"
+        }
+    },
+    "timeInSecondsBetweenBttRequest": 1,
+    "timeInHoursBetweenCheckAllMessages": 12,
+    "timeInSecondsBetweenCheckLastMessages": 5,
+	"webServer": {
+		"port": 4269
+	}
+}
