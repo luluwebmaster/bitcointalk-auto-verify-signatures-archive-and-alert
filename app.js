@@ -56,6 +56,36 @@ console.log = function (log) {
     }
 }
 
+// Function for make loop taking into account async functions
+const setLoop = async function (customFunction, time) {
+
+    // Save called time
+    const calledAt = getTime();
+
+    // Execute custom function
+    const asyncFunction = async function () {
+        return new Promise(async function (resolve) {
+            await customFunction(resolve);
+        });
+    }
+    await asyncFunction();
+
+    // if can execute next
+    if((calledAt + time) <= (new Date()).getTime()) {
+
+        // Call this function
+        setLoop(customFunction, time);
+    } else {
+
+        // Wait time
+        setTimeout(function () {
+
+            // Call this function
+            setLoop(customFunction, time);
+        }, ((calledAt + time) - (new Date()).getTime()));
+    }
+}
+
 // Function for init dom from text string
 const getDom = function (text) {
 
@@ -129,6 +159,9 @@ const getPagesNumber = function () {
         // Get pages number
         const pagesNumber = $(document).find('.navPages').eq(-2).text().trim();
 
+        // Log
+        console.log(pagesNumber+' pages found in the topic.');
+
         // Return number
         resolve(pagesNumber);
     });
@@ -182,27 +215,106 @@ const getMessagesFromPage = function (page = 'last') {
     });
 }
 
-// Function for update messages in db
-const updateDbMessages = async function () {
+// Function for manage messages in db
+const manageDbMessages = function () {
 
-    // Get page number
-    const pagesNumber = await getPagesNumber();
+    // Return promise
+    return new Promise(async function (resolve) {
 
-    // Loop in all pages
-    for(let page = 1;page<=pagesNumber;page++) {
+        // Get page number
+        const pagesNumber = await getPagesNumber();
 
-        // Get page messages
-        const pageMessages = await getMessagesFromPage(page);
+        // Loop in all pages
+        for(let page = ((db.has('lastPageChecked').value()) ? db.get('lastPageChecked').value() : 1);page<=pagesNumber;page++) {
 
-        // 
-    }
+            // Save last page checked
+            db.set('lastPageChecked', page).write();
+
+            // Get page messages
+            const pageMessages = await getMessagesFromPage(page);
+
+            // Manage messages
+            await manageMessagesFromPage(pageMessages);
+        }
+
+        // Reset last page checked
+        db.set('lastPageChecked', 1).write();
+
+        // Resolve
+        resolve();
+    });
+}
+
+// Function for manage messages from page
+const manageMessagesFromPage = function (messages) {
+
+    // Return promise
+    return new Promise(async function (resolve) {
+
+        // Loop in all messages
+        for(const messageId in messages) {
+
+            // Manange message
+            await manageMessageFromPage(messages[messageId]);
+        }
+
+        // Resolve
+        resolve();
+    });
+}
+
+// Function for manage message from page
+const manageMessageFromPage = function (message) {
+
+    // Return promise
+    return new Promise(function (resolve) {
+
+        // Set DB messages
+        const dbMessages = db.get('messages');
+
+        // If message is not saved
+        if(!dbMessages.has(message.messageId).value()) {
+
+            // Log
+            console.log('New message saved : '+message.link);
+
+            // Save message
+            dbMessages.set(message.messageId, message).write();
+        } else {
+
+            // Set db message
+            const dbMessage = dbMessages.get(message.messageId);
+
+            // If message have been updated
+            if(message.fullText !== dbMessage.get('fullText').value() && !dbMessage.has('alertSent').value()) {
+
+                // Log
+                console.log('Alert | A message have been updated : '+message.link);
+
+                // Update DB message
+                dbMessage.set('alertSent', true).write();
+
+                // TODO: Send email alert
+            }
+        }
+
+        // Resolve
+        resolve();
+    });
 }
 
 // Function for start bot
 const start = async function () {
 
-    // Start update of db messages
-    updateDbMessages();
+    // Start loop for manage db messages
+    setLoop(async function (next) {
+
+        // Start managing of db messages
+        await manageDbMessages();
+
+        // Call next
+        next();
+    }, 12 * 60 * 60 * 1000);
 }
 
 // Start bot
