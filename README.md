@@ -4,6 +4,10 @@ This script allows all those who wish to archive the messages of the subject "[S
 
 In addition to that, in case of modification or deletion of a message, you can choose to be alerted.
 
+#### TODO
+
+- Detect removed messages
+
 #### How to use ?
 
 To use this bot, you need to install [Node.JS](https://nodejs.org/).
@@ -31,7 +35,3 @@ Then, creation a new screen `screen -S change-this-by-a-screen-name` and run nod
 
 - Mail : contact@luc-mergault.fr
 - Twitter : [@Luluwebmaster](https://twitter.com/Luluwebmaster)
-
-#### TODO
-
-- Detect removed messages
