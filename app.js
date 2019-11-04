@@ -43,6 +43,15 @@ db.defaults({
 }).write();
 db.set('canCheckLast', false).write();
 
+// Function for format message
+const stripHtmlFromMessage = function (message) {
+
+    message = message.replace(/<br \/>/gm, '[back-line]').replace(/<br\/>/gm, '[back-line]').replace(/<br>/gm, '[back-line]').replace(/<\/p>/gm, '[back-line]').replace(/<p>/gm, '');
+    message = message.replace(/<[^>]+>/g, '');
+
+    return message.replace(/\[back-line\]/gm, '<br />');
+}
+
 // Function for get time
 const getTime = function () {
 
@@ -340,7 +349,11 @@ const manageMessageFromPage = function (dbMessages, message) {
                         subject: 'Bitcointalk - Alerts : A message has been updated !',
                         html:
                             'This email is a alert sent by : Bitcointalk : Auto Verify Signatures - Archive and alert !<br /><br />'+
-                            '<a href="'+message.link+'">This message has been updated.<a/>'
+                            '<a href="'+message.link+'">This message has been updated.</a><br /><br />'+
+                            '<b>Old message : </b><br />'+
+                            stripHtmlFromMessage(dbMessage.get('fullText').value())+'<br /><br />'+
+                            '<b>New message :</b><br />'+
+                            stripHtmlFromMessage(message.fullText)
                     });
                 }
             }
@@ -374,10 +387,13 @@ const checkingLastMessages = function () {
 const startWebserver = function () {
 
     // Listen get data link
-    webApp.get('/get-messages', function (req, res) {
+    webApp.get('/get-messages/:page?', function (req, res) {
+
+        // Set current page number
+        const pageNumber = (req.params.page && !isNaN(req.params.page)) ? req.params.page : 1;
 
         // Send response
-        res.json(db.get('messages').value());
+        res.json(Object.entries(db.get('messages').value()).slice(((pageNumber - 1) * config.webServer.messagesPerPage), (pageNumber * config.webServer.messagesPerPage)).map(entry => entry[1]));
     });
 
     // Listen root link

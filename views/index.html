@@ -66,6 +66,10 @@
                 width: 60px;
                 margin: auto;
             }
+            .list-group {
+                overflow: auto;
+                height: 100%;
+            }
         </style>
     </head>
     <body>
@@ -75,46 +79,78 @@
         <div class="list-group"></div>
         <script>
 
-            // Function for remove html in text
-            function stripHtml(html) {
-                var tmp = document.createElement("DIV");
-                tmp.innerHTML = html;
-                return tmp.textContent || tmp.innerText || "";
+            // Set current page
+            let currentPage = 1;
+
+            // Set in loading status
+            let inLoading = false;
+
+            // Function for load messages
+            const loadMessages = function () {
+
+                // If can load messages
+                if(inLoading == false) {
+
+                    // Update in loading status
+                    inLoading = true;
+
+                    // Get all messages
+                    $.getJSON('/get-messages/'+currentPage, function (messages) {
+
+                        // Loop in all messages
+                        for(const message of messages) {
+
+                            // Set blue color
+                            let blue = true;
+
+                            // Append message
+                            $('.list-group').append(
+                                '<a target="_blank" href="'+message['link']+'" class="list-group-item list-group-item-action '+((blue == true) ? 'active' : '')+'">'+
+                                    '<div class="d-flex w-100 justify-content-between">'+
+                                        '<h5 class="mb-1">Message from : '+message['user']['name']+'</h5>'+
+                                        '<small>Message number : '+message['number']+'</small>'+
+                                    '</div>'+
+                                    '<p class="mb-1">'+message['fullText'].replace(/<br \/>/gm, '[back-line]').replace(/<br\/>/gm, '[back-line]').replace(/<br>/gm, '[back-line]').replace(/<\/p>/gm, '[back-line]').replace(/<p>/gm, '').replace(/<[^>]+>/g, '').replace(/\[back-line\]/gm, '<br />')+'</p>'+
+                                '</a>'
+                            );
+
+                            // Update blue color
+            	            if(blue == true) {
+            	                blue = false;
+            	            } else if(blue == false) {
+            	                blue = true;
+            	            }
+                        }
+
+                        // Update in loading status
+                        inLoading = false;
+
+                        // Remove loading element
+                        $('.loading').remove();
+                    });
+
+                    // Increment next page
+                    currentPage++;
+                }
             }
 
-            // Get all messages
-            $.getJSON('/get-messages', function (messages) {
+            // Load first messages
+            loadMessages();
 
-                // Loop in all messages
-                for(const messageId in messages) {
+            // On scroll
+            $('.list-group').scroll(function() {
 
-                    // Set current message
-                    const message = messages[messageId];
+                // Current scroll post
+                const elementHeight = $(this).outerHeight();
+                const currentScrollPost = $(this).scrollTop();
+                const scrollHeight = $(this)[0].scrollHeight - elementHeight;
 
-                    // Set blue color
-                    let blue = true;
+                // If scroll come to bottom
+                if (currentScrollPost >= (scrollHeight - (elementHeight * 10))) {
 
-                    // Append message
-                    $('.list-group').append(
-                        '<a target="_blank" href="'+message['link']+'" class="list-group-item list-group-item-action '+((blue == true) ? 'active' : '')+'">'+
-                            '<div class="d-flex w-100 justify-content-between">'+
-                                '<h5 class="mb-1">Message from : '+message['user']['name']+'</h5>'+
-                                '<small>Message number : '+message['number']+'</small>'+
-                            '</div>'+
-                            '<p class="mb-1">'+stripHtml(message['fullText'].replace(/<br \/>/gm, '[back-line]').replace(/<br\/>/gm, '[back-line]').replace(/<br>/gm, '[back-line]').replace(/<\/p>/gm, '[back-line]').replace(/<p>/gm, '')).replace(/\[back-line\]/gm, '<br />')+'</p>'+
-                        '</a>'
-                    );
-
-                    // Update blue color
-    	            if(blue == true) {
-    	                blue = false;
-    	            } else if(blue == false) {
-    	                blue = true;
-    	            }
+                    // Load next messages
+                    loadMessages();
                 }
-
-                // Remove loading element
-                $('.loading').remove();
             });
         </script>
     </body>

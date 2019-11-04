@@ -7,6 +7,7 @@ In addition to that, in case of modification or deletion of a message, you can c
 #### TODO
 
 - Detect removed messages
+- Add time after post before detect a update
 
 #### How to use ?
 

@@ -9,7 +9,8 @@
     "timeInSecondsBetweenCheckLastMessages": 5,
 	"webServer": {
         "enable": true,
-		"port": 4269
+		"port": 4269,
+        "messagesPerPage": 50
 	},
     "email": {
         "enable": true,
