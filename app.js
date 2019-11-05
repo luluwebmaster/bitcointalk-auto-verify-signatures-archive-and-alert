@@ -31,6 +31,9 @@ const config = require('./config/config.json');
 const appVersions = {
     '1.0.0': {
         needToResetDb: false
+    },
+    '1.0.1': {
+        needToResetDb: true
     }
 };
 
@@ -254,9 +257,26 @@ const getMessagesFromPage = function (page = 'last') {
         domMessages.each(function () {
 
             // Get message infos
-            const domMessage = $(this).find('.post').html();
+            let domMessage = $(this).find('.post').html();
             const username = $(this).find('.poster_info > b > a').first().text().trim();
             const messageId = $(this).find('.message_number').attr('href').match(/#[a-z0-9_]+/gi)[0].replace('#', '');
+            const originalQuoteDate = $(this).find('.quoteheader a');
+
+            // Set current date
+            const currentDate = new Date();
+
+            // Loop in all quotes
+            originalQuoteDate.each(function () {
+
+                // Set current quote date
+                const currentQuoteDate = $(this).text().match(/Quote from: (.*) on (.*)/)[2];
+
+                // Replace regex
+                const replaceRegex = new RegExp(currentQuoteDate, 'gm');
+
+                // Replace today quotes in dom message
+                domMessage = domMessage.replace(replaceRegex, 'unix time : '+(new Date(currentQuoteDate.replace('Today', (currentDate.getDate()+'/'+currentDate.getMonth()+'/'+currentDate.getFullYear()))).getTime() / 1000));
+            });
 
             // If message element is a real message
             if(isNaN(username) && isNaN(domMessage)) {
