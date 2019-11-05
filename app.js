@@ -27,8 +27,15 @@ if(!Fs.existsSync('./config/config.json')) {
 // App config
 const config = require('./config/config.json');
 
+// App version
+const appVersions = {
+    '1.0.0': {
+        needToResetDb: false
+    }
+};
+
 // App variables
-const webApp = Express()
+const webApp = Express();
 if(config.email.enable) {
     var mailTransporter = Nodemailer.createTransport(config.email);
 }
@@ -36,8 +43,63 @@ const originalConsolLog = console.log;
 let lastBttRequest = 0;
 
 // Init low database
-const adapter = new FileSync('db.json')
-const db = Lowdb(adapter)
+const adapter = new FileSync('db.json');
+const db = Lowdb(adapter);
+
+// Function for log messages
+console.log = function (log) {
+
+    const today = new Date();
+
+    if(typeof log === 'string') {
+
+        originalConsolLog(today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate()+' '+today.getHours()+':'+today.getMinutes()+':'+today.getSeconds()+' > '+log);
+    } else {
+
+        originalConsolLog(log);
+    }
+}
+
+// If new version
+if(!db.has('appVersions').value() || db.get('appVersions').value() !== appVersions.versions) {
+
+    // Set need to reset status
+    let needToResetDb = false;
+
+    // List of versions needing to reset the database
+    const needingVersionResetDb = [];
+
+    // Loop in all versions
+    for(const version in appVersions) {
+
+        // Check if need to reset DB
+        if(db.has('appVersions').value() && !db.get('appVersions').has(version).value() && appVersions[version].needToResetDb) {
+
+            // Add versions in list needing reset
+            needingVersionResetDb.push(version);
+
+            // Set need to reset db status
+            needToResetDb = true;
+        }
+    }
+
+    // If need to reset db
+    if(needToResetDb) {
+
+        // Log
+        console.log('Reset DB to use new version : '+needingVersionResetDb.join(', '));
+
+        // Reset messages
+        db.set('messages', false).write();
+        db.set('messages', {}).write();
+        db.set('lastPageChecked', 1).write();
+    }
+
+    // Save versions
+    db.set('appVersions', appVersions).write();
+}
+
+// Set default values
 db.defaults({
     messages: {}
 }).write();
@@ -57,20 +119,6 @@ const getTime = function () {
 
     // Return date
     return (new Date()).getTime();
-}
-
-// Function for log messages
-console.log = function (log) {
-
-    const today = new Date();
-
-    if(typeof log === 'string') {
-
-        originalConsolLog(today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate()+' '+today.getHours()+':'+today.getMinutes()+':'+today.getSeconds()+' > '+log);
-    } else {
-
-        originalConsolLog(log);
-    }
 }
 
 // Function for make loop taking into account async functions
