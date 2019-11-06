@@ -8,6 +8,7 @@ In addition to that, in case of modification or deletion of a message, you can c
 
 - Detect removed messages
 - Add time after post before detect a update
+- Check if example configuration have new informations, and merge it with the current configuration.
 
 #### How to use ?
 
@@ -34,14 +35,14 @@ Then you can configure the file quite easily.
 
 > ##### Configuration
 >
-> - `links -> bitcointalk -> stakeAddress` -> Is the link where the bot should search the messages.
-> - `webServer -> enable` -> Enable / Disable Web access
-> - `webServer -> port` -> Used port for see archived messages.
-> - `webServer -> messagesPerPage` -> Archived messages per page loaded on page load and dynamique loading.
-> - `timeInSecondsBetweenBttRequest` -> Time in seconds between each Bitcointalk requests.
-> - `timeInHoursBetweenCheckAllMessages` -> Time in hours everytime the bot check all messages from subject.
-> - `timeInSecondsBetweenCheckLastMessages` -> Time in seconds everytime the bot check all last messages from subject.
-> - `email` -> Nodemailer configuration ( [More informations here](https://nodemailer.com/about/) )
+> - `links -> bitcointalk -> stakeAddress` Is the link where the bot should search the messages.
+> - `webServer -> enable` Enable / Disable Web access
+> - `webServer -> port` Used port for see archived messages.
+> - `webServer -> messagesPerPage` Archived messages per page loaded on page load and dynamique loading.
+> - `timeInSecondsBetweenBttRequest` Time in seconds between each Bitcointalk requests.
+> - `timeInHoursBetweenCheckAllMessages` Time in hours everytime the bot check all messages from subject.
+> - `timeInSecondsBetweenCheckLastMessages` Time in seconds everytime the bot check all last messages from subject.
+> - `email` Nodemailer configuration ( [More informations here](https://nodemailer.com/about/) )
 
 #### Projects used in this project
 
