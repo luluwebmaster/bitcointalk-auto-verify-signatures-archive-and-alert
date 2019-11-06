@@ -34,6 +34,9 @@ const appVersions = {
     },
     '1.0.1': {
         needToResetDb: true
+    },
+    '1.0.1.1': {
+        needToResetDb: true
     }
 };
 
@@ -269,13 +272,20 @@ const getMessagesFromPage = function (page = 'last') {
             originalQuoteDate.each(function () {
 
                 // Set current quote date
-                const currentQuoteDate = $(this).text().match(/Quote from: (.*) on (.*)/)[2];
+                let currentQuoteDate = $(this).html().match(/Quote from: (.*) on (.*)/);
 
-                // Replace regex
-                const replaceRegex = new RegExp(currentQuoteDate, 'gm');
+                // If quote found
+                if(currentQuoteDate) {
 
-                // Replace today quotes in dom message
-                domMessage = domMessage.replace(replaceRegex, 'unix time : '+(new Date(currentQuoteDate.replace('Today', (currentDate.getDate()+'/'+currentDate.getMonth()+'/'+currentDate.getFullYear()))).getTime() / 1000));
+                    // Set quote
+                    currentQuoteDate = currentQuoteDate[2];
+
+                    // Replace regex
+                    const replaceRegex = new RegExp(currentQuoteDate, 'gm');
+
+                    // Replace today quotes in dom message
+                    domMessage = domMessage.replace(replaceRegex, 'unix time : '+(new Date(currentQuoteDate.replace('<b>Today</b>', (currentDate.getDate()+'/'+currentDate.getMonth()+'/'+currentDate.getFullYear()))).getTime() / 1000));
+                }
             });
 
             // If message element is a real message
