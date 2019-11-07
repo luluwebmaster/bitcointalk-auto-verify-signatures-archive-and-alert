@@ -37,6 +37,9 @@ const appVersions = {
     },
     '1.0.1.1': {
         needToResetDb: true
+    },
+    '1.0.2': {
+        needToResetDb: true
     }
 };
 
@@ -259,14 +262,20 @@ const getMessagesFromPage = function (page = 'last') {
         // Loop in all dom messages
         domMessages.each(function () {
 
+            // Set current date
+            const currentDate = new Date();
+            const currentTextDate = currentDate.getFullYear()+'-'+(currentDate.getMonth()+1)+'-'+("0" + currentDate.getDate()).slice(-2);
+
             // Get message infos
             let domMessage = $(this).find('.post').html();
             const username = $(this).find('.poster_info > b > a').first().text().trim();
             const messageId = $(this).find('.message_number').attr('href').match(/#[a-z0-9_]+/gi)[0].replace('#', '');
+            let originalPostDate = $(this).find('.td_headerandpost td[valign=middle]:nth-child(2) .smalltext .edited');
+            originalPostDate = ((originalPostDate.length) ? originalPostDate : $(this).find('.td_headerandpost td[valign=middle]:nth-child(2) .smalltext').first()).text().replace('Today at', currentTextDate);
+            originalPostDate = new Date((!isNaN(originalPostDate)) ? (originalPostDate * 1000) : originalPostDate).getTime();
+            let originalEditDate = $(this).find('.td_headerandpost td[valign=middle]:nth-child(2) .smalltext .edited').attr('title');
+            originalEditDate = new Date(((originalEditDate) ? originalEditDate.match(/Last edit: (.*) by (.*)/)[1].replace('Today at', currentTextDate) : 0)).getTime();
             const originalQuoteDate = $(this).find('.quoteheader a');
-
-            // Set current date
-            const currentDate = new Date();
 
             // Loop in all quotes
             originalQuoteDate.each(function () {
@@ -284,7 +293,7 @@ const getMessagesFromPage = function (page = 'last') {
                     const replaceRegex = new RegExp(currentQuoteDate, 'gm');
 
                     // Replace today quotes in dom message
-                    domMessage = domMessage.replace(replaceRegex, 'unix time : '+(new Date(currentQuoteDate.replace('<b>Today</b>', (currentDate.getDate()+'/'+currentDate.getMonth()+'/'+currentDate.getFullYear()))).getTime() / 1000));
+                    domMessage = domMessage.replace(replaceRegex, 'unix time : '+(new Date(currentQuoteDate.replace('<b>Today</b>', currentTextDate)).getTime() / 1000));
                 }
             });
 
@@ -300,6 +309,10 @@ const getMessagesFromPage = function (page = 'last') {
                     user: {
                         name: username,
                         profileLink: $(this).find('.poster_info > b > a').first().attr('href')
+                    },
+                    dates: {
+                        message: originalPostDate,
+                        edit: originalEditDate
                     }
                 };
             }
@@ -409,7 +422,7 @@ const manageMessageFromPage = function (dbMessages, message) {
             const dbMessage = dbMessages.get(message.messageId);
 
             // If message has been updated
-            if(message.fullText !== dbMessage.get('fullText').value() && !dbMessage.has('alertSent').value()) {
+            if(message.fullText+'test' !== dbMessage.get('fullText').value() && !dbMessage.has('alertSent').value() && (message.dates.message + config.timeInMinutesBeforeDetectMessageUpdate * 60 * 1000) <= message.dates.edit && (message.dates.edit + (config.maxEditedTimeInDaysToDetectUpdate * 24 * 60 * 60 * 1000)) >= new Date().getTime()) {
 
                 // Log
                 console.log('Alert | A message has been updated : '+message.link);

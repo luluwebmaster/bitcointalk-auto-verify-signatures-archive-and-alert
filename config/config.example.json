@@ -7,6 +7,8 @@
     "timeInSecondsBetweenBttRequest": 1,
     "timeInHoursBetweenCheckAllMessages": 12,
     "timeInSecondsBetweenCheckLastMessages": 5,
+    "timeInMinutesBeforeDetectMessageUpdate": 60,
+    "maxEditedTimeInDaysToDetectUpdate": 7,
 	"webServer": {
         "enable": true,
 		"port": 4269,
