@@ -41,6 +41,8 @@ Then you can configure the file quite easily.
 > - `timeInSecondsBetweenBttRequest` Time in seconds between each Bitcointalk requests.
 > - `timeInHoursBetweenCheckAllMessages` Time in hours everytime the bot check all messages from subject.
 > - `timeInSecondsBetweenCheckLastMessages` Time in seconds everytime the bot check all last messages from subject.
+> - `timeInMinutesBeforeDetectMessageUpdate` Time in minutes before the bot start detection after post date.
+> - `maxEditedTimeInDaysToDetectUpdate` Maximum time in days when the bot detect edited messages ( Based on edit date ).
 > - `email` Nodemailer configuration ( [More informations here](https://nodemailer.com/about/) ).
 
 #### Projects used in this project
