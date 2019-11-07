@@ -7,7 +7,6 @@ In addition to that, in case of modification or deletion of a message, you can c
 #### TODO
 
 - Detect removed messages
-- Check if example configuration have new informations, and merge it with the current configuration.
 
 #### How to use ?
 

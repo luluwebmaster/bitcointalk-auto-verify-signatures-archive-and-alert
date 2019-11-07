@@ -25,23 +25,39 @@ if(!Fs.existsSync('./config/config.json')) {
 }
 
 // App config
-const config = require('./config/config.json');
+const configExample = require('./config/config.example.json');
+let config = require('./config/config.json');
 
 // App version
-const appVersions = {
-    '1.0.0': {
-        needToResetDb: false
-    },
-    '1.0.1': {
-        needToResetDb: true
-    },
-    '1.0.1.1': {
-        needToResetDb: true
-    },
-    '1.0.2': {
-        needToResetDb: true
+const appVersions = require('./config/versions.json');
+
+// Function for merge object with other
+const mergeObjectProperties = function(object, objectToMerge) {
+
+    // Loop in object to merge propertie
+    for(const index in objectToMerge) {
+
+        // If current object don't have this property
+        if(object[index] == undefined) {
+
+            // Add property
+            object[index] = objectToMerge[index];
+        } else if(object[index] !== undefined && typeof object[index] == 'object') {
+
+            // Update property
+            object[index] = mergeObjectProperties(object[index], objectToMerge[index]);
+        }
     }
+
+    // Return current object
+    return object;
 };
+
+// Merge config example with current
+config = mergeObjectProperties(config, configExample);
+
+// Save config
+Fs.writeFileSync('./config/config.json', JSON.stringify(config, null, '\t'));
 
 // App variables
 const webApp = Express();
@@ -52,7 +68,7 @@ const originalConsolLog = console.log;
 let lastBttRequest = 0;
 
 // Init low database
-const adapter = new FileSync('db.json');
+const adapter = new FileSync('./config/db.json');
 const db = Lowdb(adapter);
 
 // Function for log messages
