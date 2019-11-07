@@ -1,4 +1,5 @@
 node_modules
 package-lock.json
-db.json
-config.json
+config/db.json
+config/db.updatable.json
+config/config.json

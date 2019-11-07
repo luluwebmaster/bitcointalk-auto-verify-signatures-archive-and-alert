@@ -68,8 +68,10 @@ const originalConsolLog = console.log;
 let lastBttRequest = 0;
 
 // Init low database
-const adapter = new FileSync('./config/db.json');
-const db = Lowdb(adapter);
+const adapterDb = new FileSync('./config/db.json');
+const db = Lowdb(adapterDb);
+const adapterDbUpdatable = new FileSync('./config/db.updatable.json');
+const dbUpdatable = Lowdb(adapterDbUpdatable);
 
 // Function for log messages
 console.log = function (log) {
@@ -84,6 +86,15 @@ console.log = function (log) {
         originalConsolLog(log);
     }
 }
+
+// Set default values
+db.defaults({
+    messages: {}
+}).write();
+db.set('canCheckLast', false).write();
+dbUpdatable.defaults({
+    messages: {}
+}).write();
 
 // If new version
 if(!db.has('appVersions').value() || db.get('appVersions').value() !== appVersions.versions) {
@@ -117,18 +128,11 @@ if(!db.has('appVersions').value() || db.get('appVersions').value() !== appVersio
         // Reset messages
         db.set('messages', false).write();
         db.set('messages', {}).write();
-        db.set('lastPageChecked', 1).write();
     }
 
     // Save versions
     db.set('appVersions', appVersions).write();
 }
-
-// Set default values
-db.defaults({
-    messages: {}
-}).write();
-db.set('canCheckLast', false).write();
 
 // Function for format message
 const stripHtmlFromMessage = function (message) {
@@ -339,6 +343,56 @@ const getMessagesFromPage = function (page = 'last') {
     });
 }
 
+// Function for check message is removed
+const checkIfMessageRemoved = function () {
+
+    // Return promise
+    return new Promise(function (resolve) {
+
+        // Get all messages
+        const allMessages = db.get('messages').value();
+
+        // Get all updatables messages
+        const allUpdatablesMessages = dbUpdatable.get('messages').value();
+
+        // Loop in all messages
+        for(const index in allMessages) {
+
+            // If message is not in updatables messages
+            if(!allUpdatablesMessages[index] && !allMessages[index].removedAlertSent) {
+
+                // Set message
+                const message = allMessages[index];
+
+                // Log
+                console.log('Alert | A message has been removed : '+message.link);
+
+                // Update message alert status
+                db.get('messages').get(index).set('removedAlertSent', true).write();
+
+                // If email is enable
+                if(config.email.enable) {
+
+                    // Send alert email
+                    mailTransporter.sendMail({
+                        from: '"Bitcointalk - Alerts" <'+config.email.sender+'>',
+                        to: config.email.receivers,
+                        subject: 'Bitcointalk - Alerts : A message has been removed !',
+                        html:
+                            'This email is a alert sent by : Bitcointalk : Auto Verify Signatures - Archive and alert !<br /><br />'+
+                            '<a href="'+message.link+'">This message has been <b style="color:red;">removed</b>.</a><br /><br />'+
+                            '<b>Full message :</b><br />'+
+                            stripHtmlFromMessage(message.fullText)
+                    });
+                }
+            }
+        }
+
+        // Resolve
+        resolve();
+    });
+}
+
 // Function for checking all messages
 const checkingAllMessages = function () {
 
@@ -351,21 +405,25 @@ const checkingAllMessages = function () {
         // Get page number
         const pagesNumber = await getPagesNumber();
 
-        // Loop in all pages
-        for(let page = ((db.has('lastPageChecked').value()) ? db.get('lastPageChecked').value() : 1);page<=pagesNumber;page++) {
+        // Reset updatable messages
+        dbUpdatable.set('messages', false).write();
+        dbUpdatable.set('messages', {}).write();
 
-            // Save last page checked
-            db.set('lastPageChecked', page).write();
+        // Loop in all pages
+        for(let page = 1;page<=pagesNumber;page++) {
 
             // Get page messages
             const pageMessages = await getMessagesFromPage(page);
 
             // Manage messages
             await manageMessagesFromPage(page, pageMessages);
+
+            // Save all message in updatable message db
+            dbUpdatable.get('messages').assign(pageMessages).write();
         }
 
-        // Reset last page checked
-        db.set('lastPageChecked', 1).write();
+        // Check if a message is removed
+        await checkIfMessageRemoved();
 
         // Set can check last messages status
         db.set('canCheckLast', true).write();
@@ -438,13 +496,13 @@ const manageMessageFromPage = function (dbMessages, message) {
             const dbMessage = dbMessages.get(message.messageId);
 
             // If message has been updated
-            if(message.fullText+'test' !== dbMessage.get('fullText').value() && !dbMessage.has('alertSent').value() && (message.dates.message + config.timeInMinutesBeforeDetectMessageUpdate * 60 * 1000) <= message.dates.edit && (message.dates.edit + (config.maxEditedTimeInDaysToDetectUpdate * 24 * 60 * 60 * 1000)) >= new Date().getTime()) {
+            if(message.fullText+'test' !== dbMessage.get('fullText').value() && !dbMessage.has('updatedAlertSent').value() && (message.dates.message + config.timeInMinutesBeforeDetectMessageUpdate * 60 * 1000) <= message.dates.edit && (message.dates.edit + (config.maxEditedTimeInDaysToDetectUpdate * 24 * 60 * 60 * 1000)) >= new Date().getTime()) {
 
                 // Log
                 console.log('Alert | A message has been updated : '+message.link);
 
                 // Update DB message
-                dbMessage.set('alertSent', true).write();
+                dbMessage.set('updatedAlertSent', true).write();
 
                 // If mail is enable
                 if(config.email.enable) {
