@@ -496,7 +496,7 @@ const manageMessageFromPage = function (dbMessages, message) {
             const dbMessage = dbMessages.get(message.messageId);
 
             // If message has been updated
-            if(message.fullText+'test' !== dbMessage.get('fullText').value() && !dbMessage.has('updatedAlertSent').value() && (message.dates.message + config.timeInMinutesBeforeDetectMessageUpdate * 60 * 1000) <= message.dates.edit && (message.dates.edit + (config.maxEditedTimeInDaysToDetectUpdate * 24 * 60 * 60 * 1000)) >= new Date().getTime()) {
+            if(message.fullText !== dbMessage.get('fullText').value() && !dbMessage.has('updatedAlertSent').value() && (message.dates.message + config.timeInMinutesBeforeDetectMessageUpdate * 60 * 1000) <= message.dates.edit && (message.dates.edit + (config.maxEditedTimeInDaysToDetectUpdate * 24 * 60 * 60 * 1000)) >= new Date().getTime()) {
 
                 // Log
                 console.log('Alert | A message has been updated : '+message.link);
