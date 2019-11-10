@@ -365,7 +365,7 @@ const checkIfMessageRemoved = function () {
                 const message = allMessages[index];
 
                 // Log
-                console.log('Alert | A message has been removed : '+message.link);
+                console.log('Alert | A message from '+message.user.name+' has been removed : '+message.link);
 
                 // Update message alert status
                 db.get('messages').get(index).set('removedAlertSent', true).write();
@@ -380,7 +380,7 @@ const checkIfMessageRemoved = function () {
                         subject: 'Bitcointalk - Alerts : A message has been removed !',
                         html:
                             'This email is a alert sent by : Bitcointalk : Auto Verify Signatures - Archive and alert !<br /><br />'+
-                            '<a href="'+message.link+'">This message has been <b style="color:red;">removed</b>.</a><br /><br />'+
+                            '<a href="'+message.link+'">This message from '+message.user.name+' has been <b style="color:red;">removed</b>.</a><br /><br />'+
                             '<b>Full message :</b><br />'+
                             stripHtmlFromMessage(message.fullText)
                     });
@@ -499,7 +499,7 @@ const manageMessageFromPage = function (dbMessages, message) {
             if(message.fullText !== dbMessage.get('fullText').value() && !dbMessage.has('updatedAlertSent').value() && (message.dates.message + config.timeInMinutesBeforeDetectMessageUpdate * 60 * 1000) <= message.dates.edit && (message.dates.edit + (config.maxEditedTimeInDaysToDetectUpdate * 24 * 60 * 60 * 1000)) >= new Date().getTime()) {
 
                 // Log
-                console.log('Alert | A message has been updated : '+message.link);
+                console.log('Alert | A message from '+message.user.name+' has been updated : '+message.link);
 
                 // Update DB message
                 dbMessage.set('updatedAlertSent', true).write();
@@ -514,7 +514,7 @@ const manageMessageFromPage = function (dbMessages, message) {
                         subject: 'Bitcointalk - Alerts : A message has been updated !',
                         html:
                             'This email is a alert sent by : Bitcointalk : Auto Verify Signatures - Archive and alert !<br /><br />'+
-                            '<a href="'+message.link+'">This message has been updated.</a><br /><br />'+
+                            '<a href="'+message.link+'">This message from '+message.user.name+' has been updated.</a><br /><br />'+
                             '<b>Old message : </b><br />'+
                             stripHtmlFromMessage(dbMessage.get('fullText').value())+'<br /><br />'+
                             '<b>New message :</b><br />'+
