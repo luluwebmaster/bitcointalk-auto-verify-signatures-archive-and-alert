@@ -2,7 +2,9 @@
 
 This script allows all those who wish to archive the messages of the subject "[Stake your Bitcoin address here](https://bitcointalk.org/index.php?topic=996318.10460)".
 
-In addition to that, in case of modification or deletion of a message, you can choose to be alerted.
+In addition to that, in case of modification or deletion of a message, you can choose to be alerted via Email.
+
+You can also alert the forum by configuring the part `bitcointalk` in the config file ( It is strongly recommended to create an account dedicated to the alerts of the bot ).
 
 #### How to use ?
 
@@ -39,6 +41,11 @@ Then you can configure the file quite easily.
 > - `timeInMinutesBeforeDetectMessageUpdate` Time in minutes before the bot start detection after post date.
 > - `maxEditedTimeInDaysToDetectUpdate` Maximum time in days when the bot detect edited messages ( Based on edit date ).
 > - `email` Nodemailer configuration ( [More informations here](https://nodemailer.com/about/) ).
+> - `bitcointalk -> enable` Enable / Disable Bitcointalk alert.
+> - `bitcointalk -> username` Account for send alert in topic : Username
+> - `bitcointalk -> password` Account for send alert in topic : Password
+> - `bitcointalk -> captchaCode` Account for send alert in topic : Captcha Code ( Can be found [here](https://bitcointalk.org/captcha_code.php) )
+> - `bitcointalk -> topicId` Topic id where the alert is sent ( Don't change this ).
 
 #### Projects used in this project
 
