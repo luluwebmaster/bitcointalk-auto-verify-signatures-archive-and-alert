@@ -1,6 +1,8 @@
 {
     "links": {
         "bitcointalk": {
+			"postAlert": "https://bitcointalk.org/index.php?action=post2;start=0;board=24",
+			"login": "https://bitcointalk.org/index.php?action=login2",
             "stakeAddress": "https://bitcointalk.org/index.php?topic=996318"
         }
     },
@@ -9,6 +11,13 @@
     "timeInSecondsBetweenCheckLastMessages": 5,
     "timeInMinutesBeforeDetectMessageUpdate": 60,
     "maxEditedTimeInDaysToDetectUpdate": 7,
+	"bitcointalk": {
+		"enable": false,
+		"username": "root",
+		"password": "password",
+		"captchaCode": "place-here-your-bitcointalk-captcha-code",
+		"topicId": 5202039
+	},
 	"webServer": {
         "enable": true,
 		"port": 4269,

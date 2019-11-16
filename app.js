@@ -31,6 +31,9 @@ let config = require('./config/config.json');
 // App version
 const appVersions = require('./config/versions.json');
 
+// Init Bitcointalk cookies ( Jar )
+const bitcointalkCookies = Request.jar();
+
 // Function for merge object with other
 const mergeObjectProperties = function(object, objectToMerge) {
 
@@ -197,7 +200,7 @@ const getDom = function (text) {
 }
 
 // Function for execute Bitcointalk request
-const executeBttRequest = function (link) {
+const executeBttRequest = function (link, form = null, jar = null) {
 
     // Return promise
     return new Promise(async function (resolve) {
@@ -211,12 +214,37 @@ const executeBttRequest = function (link) {
             // Save last btt request time
             lastBttRequest = getTime();
 
-            // Execute request
-            Request.get(link, function (error, header, response) {
+            // If is post
+            if(form) {
 
-                // Return page response
-                resolve(response);
-            });
+                // Execute request
+                Request.post({
+                    url: link,
+                    form: form,
+                    jar: jar
+                }, function (error, response, body) {
+
+                    // Return page response and body
+                    resolve({
+                        body: body,
+                        response: response
+                    });
+                });
+            } else {
+
+                // Return page response and body
+                Request.get({
+                    url: link,
+                    jar: jar
+                }, function (error, response, body) {
+
+                    // Return page body
+                    resolve({
+                        body: body,
+                        response: response
+                    });
+                });
+            }
         }
 
         // If can execute request
@@ -236,6 +264,46 @@ const executeBttRequest = function (link) {
     });
 }
 
+// Function for send alert on Bitcointalk topic
+const sendBitcointalkAlert = function (title, message) {
+
+    // Return promise
+    return new Promise(async function (resolve) {
+
+        // If Bitcointalk alerts enable
+        if(config.bitcointalk.enable) {
+
+            // Replace br in messages
+            message = message.replace(/<br \/>/gm, '\n');
+
+            // Execute first request for get form informations ( Session )
+            var formInformations = await executeBttRequest(config.links.bitcointalk.postAlert, null, bitcointalkCookies);
+
+            // Send alert
+            await executeBttRequest(config.links.bitcointalk.postAlert, {
+                topic: config.bitcointalk.topicId,
+                subject: title,
+                icon: 'xx',
+                message: message,
+                notify: 0,
+                notify: 1,
+                do_watch: 0,
+                do_watch: 1,
+                lock: 0,
+                goback: 1,
+                post: 'Post',
+                num_replies: 0,
+                additional_options: 0,
+                sc: formInformations.body.match(/<input type="hidden" name="sc" value="(.*)" \/>/)[1],
+                seqnum: formInformations.body.match(/<input type="hidden" name="seqnum" value="(.*)" \/>/)[1]
+            }, bitcointalkCookies);
+        }
+
+        // Resolve
+        resolve();
+    });
+}
+
 // Function for get pages number
 const getPagesNumber = function () {
 
@@ -243,7 +311,8 @@ const getPagesNumber = function () {
     return new Promise(async function (resolve) {
 
         // Get page content
-        const pageContent = await executeBttRequest(config.links.bitcointalk.stakeAddress);
+        let pageContent = await executeBttRequest(config.links.bitcointalk.stakeAddress);
+        pageContent = pageContent.body;
 
         // Init dom
         const dom = getDom(pageContent);
@@ -268,7 +337,8 @@ const getMessagesFromPage = function (page = 'last') {
     return new Promise(async function (resolve) {
 
         // Get page content
-        const pageContent = await executeBttRequest(config.links.bitcointalk.stakeAddress+((page == 'last') ? '.new;topicseen#new' : '.'+((page - 1)*20)));
+        let pageContent = await executeBttRequest(config.links.bitcointalk.stakeAddress+((page == 'last') ? '.new;topicseen#new' : '.'+((page - 1)*20)));
+        pageContent = pageContent.body;
 
         // Init dom
         const dom = getDom(pageContent);
@@ -369,6 +439,15 @@ const checkIfMessageRemoved = function () {
 
                 // Update message alert status
                 db.get('messages').get(index).set('removedAlertSent', true).write();
+
+                // Send Bitcointalk alert
+                sendBitcointalkAlert(
+                    'Bitcointalk - Alerts : A message has been removed !',
+                    'This message is a alert sent by : [url=https://bitcointalk.org/index.php?topic=5194216.msg52808085#msg52808085]Bitcointalk : Auto Verify Signatures - Archive and alert ![/url]\n\n'+
+                    '[url='+message.link+']This message[/url] from '+message.user.name+' has been [b][color=red]removed[/color][/b].\n\n'+
+                    '[b]Full message :[/b]\n'+
+                    stripHtmlFromMessage(message.fullText)
+                );
 
                 // If email is enable
                 if(config.email.enable) {
@@ -504,6 +583,17 @@ const manageMessageFromPage = function (dbMessages, message) {
                 // Update DB message
                 dbMessage.set('updatedAlertSent', true).write();
 
+                // Send Bitcointalk alert
+                sendBitcointalkAlert(
+                    'Bitcointalk - Alerts : A message has been updated !',
+                    'This message is a alert sent by : [url=https://bitcointalk.org/index.php?topic=5194216.msg52808085#msg52808085]Bitcointalk : Auto Verify Signatures - Archive and alert ![/url]\n\n'+
+                    '[url='+message.link+']This message from '+message.user.name+' has been updated.[/url]\n\n'+
+                    '[b]Old message : [/b]\n'+
+                    stripHtmlFromMessage(dbMessage.get('fullText').value())+'\n\n'+
+                    '[b]New message :[/b]\n'+
+                    stripHtmlFromMessage(message.fullText)
+                );
+
                 // If mail is enable
                 if(config.email.enable) {
 
@@ -578,6 +668,17 @@ const startWebserver = function () {
 
 // Function for start bot
 const start = async function () {
+
+    // If Bitcointalk alerts enable
+    if(config.bitcointalk.enable) {
+
+        // Connect user to Bitcointalk
+        await executeBttRequest(config.links.bitcointalk.login+';ccode='+config.bitcointalk.captchaCode, {
+            user: config.bitcointalk.username,
+            passwrd: config.bitcointalk.password,
+            cookieneverexp: 'on'
+        }, bitcointalkCookies);
+    }
 
     // Start loop for checking all messages
     setLoop(async function (next) {
