@@ -65,7 +65,7 @@ Fs.writeFileSync('./config/config.json', JSON.stringify(config, null, '\t'));
 // App variables
 const webApp = Express();
 if(config.email.enable) {
-    let mailTransporter = Nodemailer.createTransport(config.email);
+    var mailTransporter = Nodemailer.createTransport(config.email);
 }
 const originalConsolLog = console.log;
 let lastBttRequest = 0;
