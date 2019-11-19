@@ -65,7 +65,7 @@ Fs.writeFileSync('./config/config.json', JSON.stringify(config, null, '\t'));
 // App variables
 const webApp = Express();
 if(config.email.enable) {
-    var mailTransporter = Nodemailer.createTransport(config.email);
+    let mailTransporter = Nodemailer.createTransport(config.email);
 }
 const originalConsolLog = console.log;
 let lastBttRequest = 0;
@@ -277,10 +277,10 @@ const sendBitcointalkAlert = function (title, message) {
             message = message.replace(/<br \/>/gm, '\n');
 
             // Execute first request for get form informations ( Session )
-            var formInformations = await executeBttRequest(config.links.bitcointalk.postAlert, null, bitcointalkCookies);
+            let formInformations = await executeBttRequest(config.links.bitcointalk.getPostAlertDetails+';topic='+config.bitcointalk.topicId, null, bitcointalkCookies);
 
             // Send alert
-            await executeBttRequest(config.links.bitcointalk.postAlert, {
+            var test = await executeBttRequest(config.links.bitcointalk.postAlert, {
                 topic: config.bitcointalk.topicId,
                 subject: title,
                 icon: 'xx',
@@ -292,7 +292,7 @@ const sendBitcointalkAlert = function (title, message) {
                 lock: 0,
                 goback: 1,
                 post: 'Post',
-                num_replies: 0,
+                num_replies: formInformations.body.match(/<input type="hidden" name="num_replies" value="(.*)" \/>/)[1],
                 additional_options: 0,
                 sc: formInformations.body.match(/<input type="hidden" name="sc" value="(.*)" \/>/)[1],
                 seqnum: formInformations.body.match(/<input type="hidden" name="seqnum" value="(.*)" \/>/)[1]
@@ -417,13 +417,16 @@ const getMessagesFromPage = function (page = 'last') {
 const checkIfMessageRemoved = function () {
 
     // Return promise
-    return new Promise(function (resolve) {
+    return new Promise(async function (resolve) {
 
         // Get all messages
         const allMessages = db.get('messages').value();
 
         // Get all updatables messages
         const allUpdatablesMessages = dbUpdatable.get('messages').value();
+
+        // Set final list of removed messages
+        const allRemovedMessages = [];
 
         // Loop in all messages
         for(const index in allMessages) {
@@ -440,35 +443,13 @@ const checkIfMessageRemoved = function () {
                 // Update message alert status
                 db.get('messages').get(index).set('removedAlertSent', true).write();
 
-                // Send Bitcointalk alert
-                sendBitcointalkAlert(
-                    'Bitcointalk - Alerts : A message has been removed !',
-                    'This message is a alert sent by : [url=https://bitcointalk.org/index.php?topic=5194216.msg52808085#msg52808085]Bitcointalk : Auto Verify Signatures - Archive and alert ![/url]\n\n'+
-                    '[url='+message.link+']This message[/url] from '+message.user.name+' has been [b][color=red]removed[/color][/b].\n\n'+
-                    '[b]Full message :[/b]\n'+
-                    stripHtmlFromMessage(message.fullText)
-                );
-
-                // If email is enable
-                if(config.email.enable) {
-
-                    // Send alert email
-                    mailTransporter.sendMail({
-                        from: '"Bitcointalk - Alerts" <'+config.email.sender+'>',
-                        to: config.email.receivers,
-                        subject: 'Bitcointalk - Alerts : A message has been removed !',
-                        html:
-                            'This email is a alert sent by : Bitcointalk : Auto Verify Signatures - Archive and alert !<br /><br />'+
-                            '<a href="'+message.link+'">This message from '+message.user.name+' has been <b style="color:red;">removed</b>.</a><br /><br />'+
-                            '<b>Full message :</b><br />'+
-                            stripHtmlFromMessage(message.fullText)
-                    });
-                }
+                // Push message in removed list
+                allRemovedMessages.push(message);
             }
         }
 
-        // Resolve
-        resolve();
+        // Resolve with removed messages list
+        resolve(allRemovedMessages);
     });
 }
 
@@ -501,8 +482,51 @@ const checkingAllMessages = function () {
             dbUpdatable.get('messages').assign(pageMessages).write();
         }
 
-        // Check if a message is removed
-        await checkIfMessageRemoved();
+        // Check if a message is removed ( And get list )
+        const removedMessages = await checkIfMessageRemoved();
+
+        // Set Bitcointalk full message
+        let bitcointalkFullMessage = '';
+
+        // Set Email full message
+        let emailFullMessage = '';
+
+        // Loop in all removed messages
+        for(const message of removedMessages) {
+
+            // Add alert in bitcointalk message
+            bitcointalkFullMessage =
+                bitcointalkFullMessage+
+                ((bitcointalkFullMessage == '') ? '' : '\n\n[hr]\n\n')+
+                'This message is a alert sent by : [url=https://bitcointalk.org/index.php?topic=5194216.msg52808085#msg52808085]Bitcointalk : Auto Verify Signatures - Archive and alert ![/url]\n\n'+
+                '[url='+message.link+']This message[/url] from '+message.user.name+' has been [b][color=red]removed[/color][/b].\n\n'+
+                '[b]Full message :[/b]\n'+
+                stripHtmlFromMessage(message.fullText);
+
+            // Add alert in email message
+            emailFullMessage =
+                emailFullMessage+
+                ((emailFullMessage == '') ? '' : '<br /><br />---------------------------------------------------------------<br /><br />')+
+                'This email is a alert sent by : Bitcointalk : Auto Verify Signatures - Archive and alert !<br /><br />'+
+                '<a href="'+message.link+'">This message from '+message.user.name+' has been <b style="color:red;">removed</b>.</a><br /><br />'+
+                '<b>Full message :</b><br />'+
+                stripHtmlFromMessage(message.fullText);
+        }
+
+        // Send Bitcointalk alert
+        await sendBitcointalkAlert('Bitcointalk - Alerts : Message(s) removed !', bitcointalkFullMessage);
+
+        // If email is enable
+        if(config.email.enable) {
+
+            // Send alert email
+            mailTransporter.sendMail({
+                from: '"Bitcointalk - Alerts" <'+config.email.sender+'>',
+                to: config.email.receivers,
+                subject: 'Bitcointalk - Alerts : Message(s) removed !',
+                html: emailFullMessage
+            });
+        }
 
         // Set can check last messages status
         db.set('canCheckLast', true).write();

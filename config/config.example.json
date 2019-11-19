@@ -1,6 +1,7 @@
 {
     "links": {
         "bitcointalk": {
+			"getPostAlertDetails": "https://bitcointalk.org/index.php?action=post",
 			"postAlert": "https://bitcointalk.org/index.php?action=post2;start=0;board=24",
 			"login": "https://bitcointalk.org/index.php?action=login2",
             "stakeAddress": "https://bitcointalk.org/index.php?topic=996318"
