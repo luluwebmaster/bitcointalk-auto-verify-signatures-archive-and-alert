@@ -513,11 +513,15 @@ const checkingAllMessages = function () {
                 stripHtmlFromMessage(message.fullText);
         }
 
-        // Send Bitcointalk alert
-        await sendBitcointalkAlert('Bitcointalk - Alerts : Message(s) removed !', bitcointalkFullMessage);
+        // If message is not empty
+        if(bitcointalkFullMessage !== '') {
+
+            // Send Bitcointalk alert
+            await sendBitcointalkAlert('Bitcointalk - Alerts : Message(s) removed !', bitcointalkFullMessage);
+        }
 
         // If email is enable
-        if(config.email.enable) {
+        if(emailFullMessage !== '' && config.email.enable) {
 
             // Send alert email
             mailTransporter.sendMail({
