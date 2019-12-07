@@ -727,11 +727,18 @@ const start = async function () {
     // Start loop for checking last messages
     setLoop(async function (next) {
 
+        // Log
+        console.log('Starting checking last messages ...');
+
         // Check if can check
         if(db.has('canCheckLast').value() && db.get('canCheckLast').value()) {
 
             // Checking last messages
             await checkingLastMessages();
+        } else {
+
+            // Log
+            console.log('Can\'t check last messages ...');
         }
 
         // Call next
