@@ -501,7 +501,9 @@ const checkingAllMessages = function () {
                 'This message is a alert sent by : [url=https://bitcointalk.org/index.php?topic=5194216.msg52808085#msg52808085]Bitcointalk : Auto Verify Signatures - Archive and alert ![/url]\n\n'+
                 '[url='+message.link+']This message[/url] from '+message.user.name+' has been [b][color=red]removed[/color][/b].\n\n'+
                 '[b]Full message :[/b]\n'+
-                stripHtmlFromMessage(message.fullText);
+                '[quote author='+message.user.name+' link=topic='+message.link.replace('https://bitcointalk.org/index.php?topic=', '')+' date='+(message.dates.message / 1000)+']'+
+                    stripHtmlFromMessage(message.fullText)+
+                '[/quote]';
 
             // Add alert in email message
             emailFullMessage =
@@ -617,9 +619,13 @@ const manageMessageFromPage = function (dbMessages, message) {
                     'This message is a alert sent by : [url=https://bitcointalk.org/index.php?topic=5194216.msg52808085#msg52808085]Bitcointalk : Auto Verify Signatures - Archive and alert ![/url]\n\n'+
                     '[url='+message.link+']This message from '+message.user.name+' has been updated.[/url]\n\n'+
                     '[b]Old message : [/b]\n'+
-                    stripHtmlFromMessage(dbMessage.get('fullText').value())+'\n\n'+
+                    '[quote author='+dbMessage.user.name+' link=topic='+dbMessage.link.replace('https://bitcointalk.org/index.php?topic=', '')+' date='+(dbMessage.dates.message / 1000)+']'+
+                        stripHtmlFromMessage(dbMessage.get('fullText').value())+'\n\n'+
+                    '[/quote]'+
                     '[b]New message :[/b]\n'+
-                    stripHtmlFromMessage(message.fullText)
+                    '[quote author='+message.user.name+' link=topic='+message.link.replace('https://bitcointalk.org/index.php?topic=', '')+' date='+(message.dates.message / 1000)+']'+
+                        stripHtmlFromMessage(message.fullText)+
+                    '[/quote]'
                 );
 
                 // If mail is enable
