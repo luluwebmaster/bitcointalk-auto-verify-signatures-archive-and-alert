@@ -383,7 +383,7 @@ const getMessagesFromPage = function (page = 'last') {
                     const replaceRegex = new RegExp(currentQuoteDate, 'gm');
 
                     // Replace today quotes in dom message
-                    domMessage = domMessage.replace(replaceRegex, 'unix time : '+(new Date(currentQuoteDate.replace('<b>Today</b>', currentTextDate)).getTime() / 1000));
+                    domMessage = domMessage.replace(replaceRegex, 'unix time : '+(new Date(currentQuoteDate.replace('<b>Today</b> at', currentTextDate)).getTime() / 1000));
                 }
             });
 

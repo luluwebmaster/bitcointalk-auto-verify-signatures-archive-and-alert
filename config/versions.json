@@ -13,5 +13,8 @@
     },
     "1.0.3": {
         "needToResetDb": true
+    },
+    "1.0.4": {
+        "needToResetDb": true
     }
 }
